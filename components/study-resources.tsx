@@ -41,7 +41,7 @@ export default function StudyResources() {
   const [resources, setResources] = useState<Resource[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const [selectedCourse, setSelectedCourse] = useState<string>("all_courses")
   const { toast } = useToast()
 
   // New resource form state
@@ -164,7 +164,7 @@ export default function StudyResources() {
   }
 
   // Get all unique courses
-  const uniqueCourses = Array.from(new Set(resources.map((r) => r.course).filter(Boolean)))
+  const uniqueCourses = Array.from(new Set(resources.map((r) => r.course).filter(Boolean))) as string[]
 
   // Filter resources based on search and course filter
   const filteredResources = resources.filter((resource) => {
@@ -174,7 +174,7 @@ export default function StudyResources() {
       resource.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       resource.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
 
-    const matchesCourse = !selectedCourse || resource.course === selectedCourse
+    const matchesCourse = selectedCourse === "all_courses" || resource.course === selectedCourse
 
     return matchesSearch && matchesCourse
   })
@@ -345,8 +345,8 @@ export default function StudyResources() {
           />
 
           <Select
-            value={selectedCourse !== null ? selectedCourse : "all_courses"}
-            onValueChange={(value) => setSelectedCourse(value === "all_courses" ? null : value)}
+            value={selectedCourse}
+            onValueChange={(value) => setSelectedCourse(value)}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All courses" />
@@ -456,4 +456,3 @@ export default function StudyResources() {
     </Card>
   )
 }
-
