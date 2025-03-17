@@ -574,7 +574,7 @@ export default function TutoringTracker() {
                             ${(session.durationHours * session.hourlyRate).toFixed(2)}
                           </Badge>
 
-                          <Badge variant={session.isPaid ? "success" : "secondary"} className="text-xs">
+                          <Badge variant={session.isPaid ? "default" : "secondary"} className="text-xs">
                             {session.isPaid ? "Paid" : "Unpaid"}
                           </Badge>
                         </div>
@@ -632,4 +632,3 @@ export default function TutoringTracker() {
     </div>
   )
 }
-
