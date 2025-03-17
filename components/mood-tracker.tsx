@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
+import { DayContent } from "react-day-picker"
 
 interface MoodEntry {
   id: string
@@ -180,22 +181,22 @@ export default function MoodTracker() {
             onSelect={(date) => date && setSelectedDate(date)}
             className="border rounded-md"
             components={{
-              Day: (props) => (
+              Day: ({ date, disabled, selected, today }: { date: Date; disabled?: boolean; selected?: boolean; today?: boolean }) => (
                 <button
-                  onClick={props.onClick}
+                  onClick={() => date && setSelectedDate(date)}
                   className={cn(
                     "relative h-9 w-9 p-0 text-sm font-normal aria-selected:opacity-100",
-                    props.disabled && "text-muted-foreground opacity-50",
-                    props.selected && "bg-primary text-primary-foreground",
-                    props.today && !props.selected && "border border-primary",
+                    disabled && "text-muted-foreground opacity-50",
+                    selected && "bg-primary text-primary-foreground",
+                    today && !selected && "border border-primary",
                   )}
                 >
-                  {renderDay(props.date)}
+                  {renderDay(date)}
                   <time
-                    dateTime={format(props.date, "yyyy-MM-dd")}
+                    dateTime={format(date, "yyyy-MM-dd")}
                     className="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-[0.65rem]"
                   >
-                    {format(props.date, "d")}
+                    {format(date, "d")}
                   </time>
                 </button>
               ),
@@ -214,4 +215,3 @@ export default function MoodTracker() {
     </Card>
   )
 }
-
