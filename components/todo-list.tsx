@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,74 +9,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { format } from "date-fns"
-
-interface Todo {
-  id: string
-  text: string
-  completed: boolean
-  dueDate: Date | null
-  priority: "low" | "medium" | "high"
-  area?: "personal" | "university" | "tutoring" | string
-}
+import { useTasks, Task } from "@/contexts/task-context"
 
 export default function TodoList({ limit, area = "all" }: { limit?: number; area?: string }) {
-  const [todos, setTodos] = useState<Todo[]>([])
+  const { tasks, addTask, toggleTask, deleteTask } = useTasks()
   const [newTodoText, setNewTodoText] = useState("")
   const [newTodoPriority, setNewTodoPriority] = useState<"low" | "medium" | "high">("medium")
   const [newTodoDueDate, setNewTodoDueDate] = useState<Date | null>(null)
   const [newTodoArea, setNewTodoArea] = useState(area !== "all" ? area : "personal")
 
-  // Load todos from localStorage
-  useEffect(() => {
-    const savedTodos = localStorage.getItem("todos")
-    if (savedTodos) {
-      try {
-        const parsedTodos = JSON.parse(savedTodos, (key, value) => {
-          if (key === "dueDate" && value) {
-            return new Date(value)
-          }
-          return value
-        })
-        setTodos(parsedTodos)
-      } catch (e) {
-        console.error("Failed to parse todos", e)
-      }
-    }
-  }, [])
-
-  // Save todos to localStorage
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos))
-  }, [todos])
-
-  const addTodo = () => {
+  const handleAddTodo = () => {
     if (newTodoText.trim() === "") return
 
-    const newTodo: Todo = {
-      id: Date.now().toString(),
+    addTask({
       text: newTodoText,
       completed: false,
       dueDate: newTodoDueDate,
       priority: newTodoPriority,
-      area: newTodoArea,
-    }
+      area: newTodoArea as "personal" | "university" | "tutoring",
+    })
 
-    setTodos([...todos, newTodo])
     setNewTodoText("")
     setNewTodoPriority("medium")
     setNewTodoDueDate(null)
   }
 
-  const toggleTodo = (id: string) => {
-    setTodos(todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)))
-  }
-
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
-  }
-
   // Filter todos by area if specified
-  const filteredTodos = area === "all" ? todos : todos.filter((todo) => todo.area === area)
+  const filteredTodos = area === "all" ? tasks : tasks.filter((todo) => todo.area === area)
 
   // Sort todos by priority and completion status
   const sortedTodos = [...filteredTodos].sort((a, b) => {
@@ -102,7 +61,7 @@ export default function TodoList({ limit, area = "all" }: { limit?: number; area
           onChange={(e) => setNewTodoText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              addTodo()
+              handleAddTodo()
             }
           }}
           className="flex-1"
@@ -143,13 +102,13 @@ export default function TodoList({ limit, area = "all" }: { limit?: number; area
             <CalendarComponent
               mode="single"
               selected={newTodoDueDate || undefined}
-              onSelect={setNewTodoDueDate}
+              onSelect={(date) => setNewTodoDueDate(date || null)}
               initialFocus
             />
           </PopoverContent>
         </Popover>
 
-        <Button onClick={addTodo}>
+        <Button onClick={handleAddTodo}>
           <Plus className="h-4 w-4 mr-2" />
           Add
         </Button>
@@ -167,7 +126,7 @@ export default function TodoList({ limit, area = "all" }: { limit?: number; area
               } ${!todo.completed && todo.priority === "high" ? "border-destructive/20" : ""}`}
             >
               <div className="flex items-center gap-3">
-                <Checkbox checked={todo.completed} onCheckedChange={() => toggleTodo(todo.id)} id={`todo-${todo.id}`} />
+                <Checkbox checked={todo.completed} onCheckedChange={() => toggleTask(todo.id)} id={`todo-${todo.id}`} />
                 <div>
                   <label
                     htmlFor={`todo-${todo.id}`}
@@ -202,7 +161,7 @@ export default function TodoList({ limit, area = "all" }: { limit?: number; area
                 >
                   {todo.priority}
                 </span>
-                <Button variant="ghost" size="icon" onClick={() => deleteTodo(todo.id)}>
+                <Button variant="ghost" size="icon" onClick={() => deleteTask(todo.id)}>
                   <Trash className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
                 </Button>
@@ -220,4 +179,3 @@ export default function TodoList({ limit, area = "all" }: { limit?: number; area
     </div>
   )
 }
-

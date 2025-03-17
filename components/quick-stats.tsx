@@ -4,7 +4,17 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle2, Calendar, Bell, Droplets, Check } from "lucide-react"
+import { CheckCircle2, Bell, Droplets, Check, Plus, Timer } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+
+interface DashboardSettings {
+  volumeUnit: "ml" | "fl oz"
+  useMetricSystem: boolean
+}
+
+// Conversion functions
+const mlToOz = (ml: number) => Number((ml / 29.5735).toFixed(1))
 
 // Update QuickStats to show stats by area
 export default function QuickStats() {
@@ -16,13 +26,33 @@ export default function QuickStats() {
     waterIntake: 0,
     completedHabits: 0,
     totalHabits: 0,
+    completedPomodoros: 0,
     // Add stats by area
     personal: { tasks: 0, events: 0, habits: 0, reminders: 0 },
     university: { tasks: 0, events: 0, habits: 0, reminders: 0 },
     tutoring: { tasks: 0, events: 0, habits: 0, reminders: 0 },
   })
 
+  const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>({
+    volumeUnit: "ml",
+    useMetricSystem: true,
+  })
+
   useEffect(() => {
+    // Load dashboard settings
+    const savedDashboardSettings = localStorage.getItem("dashboard-settings")
+    if (savedDashboardSettings) {
+      try {
+        const parsed = JSON.parse(savedDashboardSettings)
+        setDashboardSettings({
+          volumeUnit: parsed.volumeUnit || "ml",
+          useMetricSystem: parsed.useMetricSystem || true,
+        })
+      } catch (e) {
+        console.error("Failed to parse dashboard settings", e)
+      }
+    }
+
     // Get todos
     const savedTodos = localStorage.getItem("todos")
     let todos = []
@@ -64,6 +94,17 @@ export default function QuickStats() {
         habits = JSON.parse(savedHabits)
       } catch (e) {
         console.error("Failed to parse habits", e)
+      }
+    }
+
+    // Get completed pomodoros
+    const savedPomodoros = localStorage.getItem("completed-pomodoros")
+    let completedPomodoros = 0
+    if (savedPomodoros) {
+      try {
+        completedPomodoros = JSON.parse(savedPomodoros)
+      } catch (e) {
+        console.error("Failed to parse completed pomodoros", e)
       }
     }
 
@@ -157,11 +198,35 @@ export default function QuickStats() {
       waterIntake,
       completedHabits,
       totalHabits: todayHabits.length,
+      completedPomodoros,
       personal: areaStats.personal,
       university: areaStats.university,
       tutoring: areaStats.tutoring,
     })
   }, [])
+
+  // Watch for dashboard settings changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "dashboard-settings" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue)
+          setDashboardSettings({
+            volumeUnit: parsed.volumeUnit || "ml",
+            useMetricSystem: parsed.useMetricSystem || true,
+          })
+        } catch (e) {
+          console.error("Failed to parse dashboard settings", e)
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
+
+  // Convert water intake for display
+  const displayWaterIntake = dashboardSettings.volumeUnit === "fl oz" ? mlToOz(stats.waterIntake) : stats.waterIntake
 
   return (
     <div className="space-y-4">
@@ -174,13 +239,6 @@ export default function QuickStats() {
         />
 
         <StatCard
-          title="Today's Events"
-          value={stats.todayEvents.toString()}
-          icon={<Calendar className="h-5 w-5" />}
-          color="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-        />
-
-        <StatCard
           title="Active Reminders"
           value={stats.activeReminders.toString()}
           icon={<Bell className="h-5 w-5" />}
@@ -189,7 +247,7 @@ export default function QuickStats() {
 
         <StatCard
           title="Water Intake"
-          value={`${stats.waterIntake} oz`}
+          value={`${displayWaterIntake} ${dashboardSettings.volumeUnit}`}
           icon={<Droplets className="h-5 w-5" />}
           color="bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400"
         />
@@ -199,6 +257,13 @@ export default function QuickStats() {
           value={`${stats.completedHabits}/${stats.totalHabits}`}
           icon={<Check className="h-5 w-5" />}
           color="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+        />
+
+        <StatCard
+          title="Focus Sessions"
+          value={stats.completedPomodoros.toString()}
+          icon={<Timer className="h-5 w-5" />}
+          color="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
         />
       </div>
 
@@ -256,32 +321,45 @@ function AreaStatCard({
   stats: { tasks: number; events: number; habits: number; reminders: number }
   color: string
 }) {
+  const area = title.toLowerCase() as "personal" | "university" | "tutoring"
+  const descriptions = {
+    personal: "Personal development, health, and wellness",
+    university: "Academic tasks and study management",
+    tutoring: "Tutoring sessions and preparation",
+  }
+
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className={`p-2 rounded-md ${color} mb-3`}>
-          <h3 className="font-medium">{title}</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Tasks:</span>
-            <span className="font-medium">{stats.tasks}</span>
+    <Link href={`/${area}`}>
+      <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+        <CardContent className="p-4">
+          <div className={`p-2 rounded-md ${color} mb-3`}>
+            <h3 className="font-medium">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{descriptions[area]}</p>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Events:</span>
-            <span className="font-medium">{stats.events}</span>
+          <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Tasks:</span>
+              <span className="font-medium">{stats.tasks}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Events:</span>
+              <span className="font-medium">{stats.events}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Habits:</span>
+              <span className="font-medium">{stats.habits}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Reminders:</span>
+              <span className="font-medium">{stats.reminders}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Habits:</span>
-            <span className="font-medium">{stats.habits}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Reminders:</span>
-            <span className="font-medium">{stats.reminders}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          <Button variant="outline" className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add {title} Task
+          </Button>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
-

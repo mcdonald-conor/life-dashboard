@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { format, subDays } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dumbbell, Trash, Scale, Clock, Plus } from "lucide-react"
+import { Dumbbell, Trash, Scale, Clock, Plus, ListPlus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { workoutTemplates } from "@/lib/workout-templates"
+
+interface Exercise {
+  name: string
+  sets: number | string
+  reps: number | string
+  weight?: number // in kg
+}
 
 interface Workout {
   id: string
@@ -28,6 +36,7 @@ interface Workout {
   duration: number // in minutes
   intensity: "low" | "medium" | "high"
   details: string
+  exercises?: Exercise[] // Added exercises array
   caloriesBurned?: number
 }
 
@@ -40,14 +49,14 @@ interface WeightEntry {
 }
 
 const WORKOUT_TYPES = [
-  "Cardio",
   "Strength Training",
+  "Cardio",
+  "HIIT",
   "Yoga",
   "Swimming",
   "Cycling",
   "Running",
   "Walking",
-  "HIIT",
   "Pilates",
   "Other",
 ]
@@ -57,16 +66,18 @@ export default function FitnessTracker() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
   const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false)
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const [weightDialogOpen, setWeightDialogOpen] = useState(false)
   const { toast } = useToast()
 
   // New workout form state
   const [newWorkout, setNewWorkout] = useState<Omit<Workout, "id">>({
     date: new Date().toISOString(),
-    type: "Cardio",
-    duration: 30,
+    type: "Strength Training",
+    duration: 60,
     intensity: "medium",
     details: "",
+    exercises: [],
   })
 
   // New weight entry form state
@@ -124,16 +135,29 @@ export default function FitnessTracker() {
     // Reset form
     setNewWorkout({
       date: new Date().toISOString(),
-      type: "Cardio",
-      duration: 30,
+      type: "Strength Training",
+      duration: 60,
       intensity: "medium",
       details: "",
+      exercises: [],
     })
 
     toast({
       title: "Workout logged",
       description: `${workout.type} workout for ${workout.duration} minutes`,
     })
+  }
+
+  const loadTemplate = (template: typeof workoutTemplates[0]) => {
+    setNewWorkout({
+      ...newWorkout,
+      type: "Strength Training",
+      details: template.name,
+      exercises: template.exercises,
+      duration: 60,
+    })
+    setTemplateDialogOpen(false)
+    setWorkoutDialogOpen(true)
   }
 
   const addWeightEntry = () => {
@@ -221,6 +245,37 @@ export default function FitnessTracker() {
                 </p>
               </div>
 
+              <div className="flex gap-2">
+                <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <ListPlus className="h-4 w-4 mr-2" />
+                      Templates
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Workout Templates</DialogTitle>
+                      <DialogDescription>Choose a template to start your workout</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-2 py-4">
+                      {workoutTemplates.map((template) => (
+                        <Card
+                          key={template.id}
+                          className="p-4 cursor-pointer hover:bg-muted/50"
+                          onClick={() => loadTemplate(template)}
+                        >
+                          <h4 className="font-medium">{template.name}</h4>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {template.exercises.length} exercises
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
               <Dialog open={workoutDialogOpen} onOpenChange={setWorkoutDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -228,7 +283,7 @@ export default function FitnessTracker() {
                     Log Workout
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                  <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Log a New Workout</DialogTitle>
                     <DialogDescription>Record your exercise to track your fitness progress</DialogDescription>
@@ -253,6 +308,80 @@ export default function FitnessTracker() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                      <div className="grid gap-2">
+                        <Label>Exercises</Label>
+                        <div className="space-y-2">
+                          {newWorkout.exercises?.map((exercise, index) => (
+                            <div key={index} className="grid grid-cols-4 gap-2 items-center">
+                              <div className="col-span-2">
+                                <Input
+                                  value={exercise.name}
+                                  onChange={(e) => {
+                                    const updatedExercises = [...(newWorkout.exercises || [])]
+                                    updatedExercises[index] = { ...exercise, name: e.target.value }
+                                    setNewWorkout({ ...newWorkout, exercises: updatedExercises })
+                                  }}
+                                  placeholder="Exercise name"
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={exercise.sets}
+                                  onChange={(e) => {
+                                    const updatedExercises = [...(newWorkout.exercises || [])]
+                                    updatedExercises[index] = { ...exercise, sets: e.target.value }
+                                    setNewWorkout({ ...newWorkout, exercises: updatedExercises })
+                                  }}
+                                  placeholder="Sets"
+                                  className="w-20"
+                                />
+                                <Input
+                                  value={exercise.reps}
+                                  onChange={(e) => {
+                                    const updatedExercises = [...(newWorkout.exercises || [])]
+                                    updatedExercises[index] = { ...exercise, reps: e.target.value }
+                                    setNewWorkout({ ...newWorkout, exercises: updatedExercises })
+                                  }}
+                                  placeholder="Reps"
+                                  className="w-20"
+                                />
+                                <Input
+                                  value={exercise.weight || ""}
+                                  onChange={(e) => {
+                                    const updatedExercises = [...(newWorkout.exercises || [])]
+                                    updatedExercises[index] = {
+                                      ...exercise,
+                                      weight: e.target.value ? Number(e.target.value) : undefined,
+                                    }
+                                    setNewWorkout({ ...newWorkout, exercises: updatedExercises })
+                                  }}
+                                  placeholder="Weight (kg)"
+                                  type="number"
+                                  className="w-24"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-2"
+                          onClick={() =>
+                            setNewWorkout({
+                              ...newWorkout,
+                              exercises: [
+                                ...(newWorkout.exercises || []),
+                                { name: "", sets: 3, reps: 10 },
+                              ],
+                            })
+                          }
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Exercise
+                        </Button>
+                      </div>
 
                     <div className="grid gap-2">
                       <Label htmlFor="duration">Duration (minutes)</Label>
@@ -290,7 +419,7 @@ export default function FitnessTracker() {
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="details">Details (Optional)</Label>
+                        <Label htmlFor="details">Notes (Optional)</Label>
                       <Textarea
                         id="details"
                         placeholder="Exercise details, how you felt, etc."
@@ -308,6 +437,7 @@ export default function FitnessTracker() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
 
             {workouts.length === 0 ? (
@@ -339,6 +469,20 @@ export default function FitnessTracker() {
                               {workout.caloriesBurned && <div>~{workout.caloriesBurned} kcal</div>}
                             </div>
                             {workout.details && <p className="text-sm mt-2">{workout.details}</p>}
+                            {workout.exercises && workout.exercises.length > 0 && (
+                              <div className="mt-3 space-y-1">
+                                {workout.exercises.map((exercise, index) => (
+                                  <div key={index} className="text-sm">
+                                    <span className="font-medium">{exercise.name}</span>
+                                    <span className="text-muted-foreground">
+                                      {" "}
+                                      - {exercise.sets} × {exercise.reps}
+                                      {exercise.weight && ` @ ${exercise.weight}kg`}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -528,4 +672,3 @@ export default function FitnessTracker() {
     </Card>
   )
 }
-

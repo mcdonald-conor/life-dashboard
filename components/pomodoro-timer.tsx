@@ -57,6 +57,16 @@ export default function PomodoroTimer() {
         console.error("Failed to parse pomodoro settings", e)
       }
     }
+
+    // Load completed sessions
+    const savedCompletedSessions = localStorage.getItem("completed-pomodoros")
+    if (savedCompletedSessions) {
+      try {
+        setCompletedSessions(JSON.parse(savedCompletedSessions))
+      } catch (e) {
+        console.error("Failed to parse completed pomodoros", e)
+      }
+    }
   }, [])
 
   // Initialize timer based on mode
@@ -110,6 +120,9 @@ export default function PomodoroTimer() {
     if (mode === "work") {
       const newCompletedSessions = completedSessions + 1
       setCompletedSessions(newCompletedSessions)
+
+      // Save completed sessions to localStorage
+      localStorage.setItem("completed-pomodoros", JSON.stringify(newCompletedSessions))
 
       // Show notification
       toast({
@@ -221,152 +234,145 @@ export default function PomodoroTimer() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Pomodoro Timer</CardTitle>
-            <CardDescription>
-              {mode === "work" ? "Focus time" : mode === "break" ? "Short break" : "Long break"}
-            </CardDescription>
-          </div>
-          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <SettingsIcon className="h-4 w-4" />
-                <span className="sr-only">Timer Settings</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Pomodoro Settings</DialogTitle>
-                <DialogDescription>Customize your work and break intervals</DialogDescription>
-              </DialogHeader>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-muted-foreground">
+          {mode === "work" ? "Focus time" : mode === "break" ? "Short break" : "Long break"}
+        </div>
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <SettingsIcon className="h-4 w-4" />
+              <span className="sr-only">Timer Settings</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Pomodoro Settings</DialogTitle>
+              <DialogDescription>Customize your work and break intervals</DialogDescription>
+            </DialogHeader>
 
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="workDuration">Work Duration (minutes)</Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="workDuration"
-                      min={1}
-                      max={60}
-                      step={1}
-                      value={[settings.workDuration]}
-                      onValueChange={(value) => setSettings({ ...settings, workDuration: value[0] })}
-                    />
-                    <span className="w-12 text-center">{settings.workDuration}</span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="breakDuration">Break Duration (minutes)</Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="breakDuration"
-                      min={1}
-                      max={30}
-                      step={1}
-                      value={[settings.breakDuration]}
-                      onValueChange={(value) => setSettings({ ...settings, breakDuration: value[0] })}
-                    />
-                    <span className="w-12 text-center">{settings.breakDuration}</span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="longBreakDuration"
-                      min={5}
-                      max={45}
-                      step={1}
-                      value={[settings.longBreakDuration]}
-                      onValueChange={(value) => setSettings({ ...settings, longBreakDuration: value[0] })}
-                    />
-                    <span className="w-12 text-center">{settings.longBreakDuration}</span>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="longBreakInterval">Sessions before Long Break</Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="longBreakInterval"
-                      min={1}
-                      max={8}
-                      step={1}
-                      value={[settings.longBreakInterval]}
-                      onValueChange={(value) => setSettings({ ...settings, longBreakInterval: value[0] })}
-                    />
-                    <span className="w-12 text-center">{settings.longBreakInterval}</span>
-                  </div>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="workDuration">Work Duration (minutes)</Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="workDuration"
+                    min={1}
+                    max={60}
+                    step={1}
+                    value={[settings.workDuration]}
+                    onValueChange={(value) => setSettings({ ...settings, workDuration: value[0] })}
+                  />
+                  <span className="w-12 text-center">{settings.workDuration}</span>
                 </div>
               </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSettingsOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => saveSettings(settings)}>Save Changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              <div className="grid gap-2">
+                <Label htmlFor="breakDuration">Break Duration (minutes)</Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="breakDuration"
+                    min={1}
+                    max={30}
+                    step={1}
+                    value={[settings.breakDuration]}
+                    onValueChange={(value) => setSettings({ ...settings, breakDuration: value[0] })}
+                  />
+                  <span className="w-12 text-center">{settings.breakDuration}</span>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="longBreakDuration"
+                    min={5}
+                    max={45}
+                    step={1}
+                    value={[settings.longBreakDuration]}
+                    onValueChange={(value) => setSettings({ ...settings, longBreakDuration: value[0] })}
+                  />
+                  <span className="w-12 text-center">{settings.longBreakDuration}</span>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="longBreakInterval">Sessions before Long Break</Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    id="longBreakInterval"
+                    min={1}
+                    max={8}
+                    step={1}
+                    value={[settings.longBreakInterval]}
+                    onValueChange={(value) => setSettings({ ...settings, longBreakInterval: value[0] })}
+                  />
+                  <span className="w-12 text-center">{settings.longBreakInterval}</span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSettingsOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => saveSettings(settings)}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="flex flex-col items-center space-y-4">
+        <div className="text-4xl font-bold tabular-nums">{formatTime(timeLeft)}</div>
+
+        <Progress value={calculateProgress()} className="w-full h-2" />
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant={mode === "work" ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setMode("work")
+              resetTimer()
+            }}
+          >
+            Work
+          </Button>
+          <Button
+            variant={mode === "break" ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setMode("break")
+              resetTimer()
+            }}
+          >
+            Break
+          </Button>
+          <Button
+            variant={mode === "longBreak" ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setMode("longBreak")
+              resetTimer()
+            }}
+          >
+            Long Break
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center space-y-4">
-          <div className="text-4xl font-bold tabular-nums">{formatTime(timeLeft)}</div>
 
-          <Progress value={calculateProgress()} className="w-full h-2" />
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant={mode === "work" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setMode("work")
-                resetTimer()
-              }}
-            >
-              Work
-            </Button>
-            <Button
-              variant={mode === "break" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setMode("break")
-                resetTimer()
-              }}
-            >
-              Break
-            </Button>
-            <Button
-              variant={mode === "longBreak" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setMode("longBreak")
-                resetTimer()
-              }}
-            >
-              Long Break
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button onClick={toggleTimer} size="icon" variant="outline">
-              {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            <Button onClick={resetTimer} size="icon" variant="outline">
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="text-sm text-muted-foreground">Sessions completed: {completedSessions}</div>
+        <div className="flex items-center gap-2">
+          <Button onClick={toggleTimer} size="icon" variant="outline">
+            {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <Button onClick={resetTimer} size="icon" variant="outline">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="text-sm text-muted-foreground">Sessions completed: {completedSessions}</div>
+      </div>
+    </div>
   )
 }
-
