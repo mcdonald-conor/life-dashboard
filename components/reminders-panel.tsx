@@ -332,7 +332,7 @@ export default function RemindersPanel({ limit, area = "all" }: { limit?: number
                     className="h-8 w-8 rounded-full"
                     onClick={() => markCompleted(reminder.id)}
                     disabled={
-                      reminder.lastCompleted &&
+                      reminder.lastCompleted !== null &&
                       format(new Date(reminder.lastCompleted), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
                     }
                   >
@@ -361,4 +361,3 @@ export default function RemindersPanel({ limit, area = "all" }: { limit?: number
     </div>
   )
 }
-
