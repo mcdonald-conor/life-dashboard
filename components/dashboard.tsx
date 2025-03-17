@@ -20,6 +20,7 @@ import SleepTracker from "./sleep-tracker"
 import AssignmentTracker from "./assignment-tracker"
 import StudyResources from "./study-resources"
 import TutoringTracker from "./tutoring-tracker"
+import StudyTopicTracker from "./study-topic-tracker"
 
 // Define life areas
 const LIFE_AREAS = ["personal", "university", "tutoring"] as const
@@ -157,6 +158,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 gap-4">
               <AssignmentTracker />
+              <StudyTopicTracker />
               <StudyResources />
               <HabitTracker area="university" />
               <RemindersPanel area="university" />
