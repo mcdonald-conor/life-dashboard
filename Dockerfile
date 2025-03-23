@@ -38,10 +38,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Generate Prisma client first
 RUN pnpm prisma generate
 
-# Copy the native bcrypt module to a safe location
-RUN mkdir -p /tmp/bcrypt-lib
-RUN cp -R ./node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib/binding /tmp/bcrypt-lib/
-
 # Build the application
 RUN pnpm build
 
@@ -70,11 +66,13 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm add -g prisma
 
 # Create necessary directories and set permissions
-RUN mkdir -p .next/cache node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib
-RUN chown -R nextjs:nodejs .next node_modules scripts
+RUN mkdir -p .next/cache
+RUN chown -R nextjs:nodejs .next scripts
 
-# Copy the prebuilt bcrypt native module
-COPY --from=builder --chown=nextjs:nodejs /tmp/bcrypt-lib/binding /app/node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib/binding
+# Copy the node_modules from builder (including bcrypt) instead of just binding
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Make scripts executable
 RUN chmod +x ./entrypoint.sh
 RUN chmod +x ./scripts/rebuild-bcrypt.js
 
