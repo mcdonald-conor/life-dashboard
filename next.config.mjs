@@ -17,15 +17,14 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: [],
-    outputFileTracingExcludes: {
-      '*': [],
-    },
-    outputFileTracingIncludes: {
-      '*': [],
-    },
+  serverExternalPackages: [],
+  outputFileTracingExcludes: {
+    '*': [],
   },
+  outputFileTracingIncludes: {
+    '*': [],
+  },
+  experimental: {}
 }
 
 mergeConfig(nextConfig, userConfig)

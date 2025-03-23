@@ -53,11 +53,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
-# Install pnpm
+# Install pnpm with proper configuration
 RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV PNPM_HOME=/app/.pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN mkdir -p $PNPM_HOME
 
-# Install Prisma for migrations
-RUN pnpm add -g prisma
+# Copy prisma from the builder stage instead of installing it globally
+COPY --from=builder /app/node_modules/.bin/prisma /usr/local/bin/prisma
+COPY --from=builder /app/node_modules/@prisma /usr/local/lib/node_modules/@prisma
 
 # Create necessary directories and set permissions
 RUN mkdir -p .next/cache
