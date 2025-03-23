@@ -1,9 +1,12 @@
+import { NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth";
 
-// Create a handler using the auth config
-const handler = NextAuth(authConfig);
+// Auth.js v5 with Next.js App Router implementation
+// https://authjs.dev/guides/upgrade-to-v5
 
-// Export the handler as GET and POST handlers
-export const GET = handler;
-export const POST = handler;
+// Import the handlers from the root auth.ts file
+import { GET, POST } from "@/auth";
+
+// Export the handlers directly
+export { GET, POST };

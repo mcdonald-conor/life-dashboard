@@ -1,9 +1,11 @@
+import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcrypt";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 
+// This is the Auth.js v5 configuration
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -63,3 +65,6 @@ export const authConfig: NextAuthConfig = {
     },
   },
 };
+
+// Create a unified auth() function
+export const { auth, handlers: { GET, POST } } = NextAuth(authConfig);
