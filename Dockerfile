@@ -27,6 +27,8 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Generate Prisma client first
+RUN npx prisma generate
 RUN pnpm build
 
 # Production image, copy all the files and run next
