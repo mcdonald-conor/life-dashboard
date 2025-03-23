@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "node scripts/rebuild-bcrypt.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",

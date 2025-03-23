@@ -17,6 +17,21 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ['bcrypt'],
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/src/**',
+        'node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/binding.gyp',
+        'node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/build/**',
+      ],
+    },
+    outputFileTracingIncludes: {
+      '*': [
+        'node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib/binding/**',
+      ],
+    },
+  },
 }
 
 mergeConfig(nextConfig, userConfig)

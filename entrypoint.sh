@@ -6,6 +6,22 @@ set -e
 echo "Node version: $(node -v)"
 echo "Starting application in $NODE_ENV environment"
 
+# Run bcrypt check and rebuild script
+echo "Running bcrypt check script..."
+node /app/scripts/rebuild-bcrypt.js
+
+# Verify bcrypt is installed correctly
+echo "Verifying bcrypt installation..."
+if [ -d "/app/node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib/binding" ]; then
+  echo "bcrypt binding directory exists"
+  ls -la /app/node_modules/.pnpm/bcrypt@5.1.1/node_modules/bcrypt/lib/binding || echo "Cannot list binding directory"
+
+  # Try to find the native module
+  find /app/node_modules -name "bcrypt_lib.node" || echo "bcrypt_lib.node not found in node_modules"
+else
+  echo "WARNING: bcrypt binding directory does not exist"
+fi
+
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
 # Add a simple connection check
