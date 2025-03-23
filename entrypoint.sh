@@ -12,7 +12,7 @@ echo "Waiting for database to be ready..."
 for i in 1 2 3 4 5
 do
   echo "Attempt $i: Checking database connection..."
-  if npx prisma db pull --force >/dev/null 2>&1; then
+  if pnpm prisma db pull --force >/dev/null 2>&1; then
     echo "Database connection successful!"
     break
   fi
@@ -28,13 +28,13 @@ done
 
 # Run migrations
 echo "Running database migrations..."
-npx prisma migrate deploy
+pnpm prisma migrate deploy
 
 echo "Database migrations completed!"
 
 # Generate Prisma client if needed
 echo "Generating Prisma client..."
-npx prisma generate
+pnpm prisma generate
 
 echo "Starting application..."
 exec "$@"

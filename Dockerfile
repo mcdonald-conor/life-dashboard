@@ -28,7 +28,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate Prisma client first
-RUN npx prisma generate
+RUN pnpm prisma generate
 RUN pnpm build
 
 # Production image, copy all the files and run next
@@ -45,8 +45,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Install Prisma for migrations
-RUN npm install -g prisma
+RUN pnpm add -g prisma
 
 # Set the correct permission for prerender cache and entrypoint
 RUN mkdir .next
