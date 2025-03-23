@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import NextAuth from "next-auth";
-import { authConfig } from "./auth";
+import { authConfig } from "@/auth";
 
 // Auth.js v5 with Next.js App Router implementation
 // https://authjs.dev/guides/upgrade-to-v5
