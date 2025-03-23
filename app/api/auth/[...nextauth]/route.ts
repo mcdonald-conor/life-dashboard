@@ -3,10 +3,10 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { NextRequest } from "next/server";
-import { Session } from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 
-export const authOptions = {
+// NextAuth v5 configuration using the config object pattern
+export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -31,8 +31,8 @@ export const authOptions = {
         }
 
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
+          String(credentials.password),
+          String(user.password)
         );
 
         if (!isPasswordValid) {
@@ -49,21 +49,24 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "jwt" as const,
+    strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/",
   },
   callbacks: {
-    async session({ session, token }: { session: Session; token: any }) {
+    async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.sub;
+        session.user.id = token.sub as string;
       }
       return session;
     },
   },
 };
 
-const handler = NextAuth(authOptions);
+// Create the handler using the auth config
+const handler = NextAuth(authConfig);
+
+// Export the GET and POST methods
 export { handler as GET, handler as POST };
