@@ -44,7 +44,8 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install runtime dependencies
-RUN apk add --no-cache libc6-compat python3
+RUN apk add --no-cache libc6-compat python3 curl postgresql-client netcat-openbsd
+RUN npm install -g prisma
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -52,6 +53,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+COPY --from=builder /app/test-db.js ./test-db.js
 
 # Install pnpm with proper configuration
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -59,16 +61,12 @@ ENV PNPM_HOME=/app/.pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME
 
-# Copy prisma from the builder stage instead of installing it globally
-COPY --from=builder /app/node_modules/.bin/prisma /usr/local/bin/prisma
-COPY --from=builder /app/node_modules/@prisma /usr/local/lib/node_modules/@prisma
+# Copy all node_modules from builder instead of just prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Create necessary directories and set permissions
 RUN mkdir -p .next/cache
 RUN chown -R nextjs:nodejs .next
-
-# Copy the node_modules from builder
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Make scripts executable
 RUN chmod +x ./entrypoint.sh
