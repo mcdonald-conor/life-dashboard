@@ -1,13 +1,24 @@
-import { PrismaClient } from "@prisma/client";
+// This file contains a workaround for using Prisma with Next.js
+// @see https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+// Import the PrismaClient directly from node_modules to avoid TS errors
+// The require is used to handle Prisma's peculiar export format
+const { PrismaClient } = require('@prisma/client');
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-  });
+// Define a type to represent our global PrismaClient
+declare global {
+  var prisma: typeof PrismaClient | undefined;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Creating a single instance of PrismaClient
+const prismaGlobal = global.prisma || new PrismaClient({
+  log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+});
+
+// In development, save the PrismaClient on the globalThis object
+// to prevent multiple instances of PrismaClient from being created
+if (process.env.NODE_ENV !== "production") {
+  global.prisma = prismaGlobal;
+}
+
+export const prisma = prismaGlobal;
