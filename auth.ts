@@ -1,9 +1,9 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcrypt";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/crypto";
 
 // This is the Auth.js v5 configuration
 export const authConfig: NextAuthConfig = {
@@ -30,8 +30,8 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        // Fix the bcrypt compare call by ensuring both arguments are strings
-        const isPasswordValid = await bcrypt.compare(
+        // Use the crypto-based password verification
+        const isPasswordValid = await verifyPassword(
           String(credentials.password),
           String(user.password)
         );

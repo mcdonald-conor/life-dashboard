@@ -10,9 +10,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install dependencies based on the preferred package manager
 COPY package.json pnpm-lock.yaml* ./
-COPY scripts/rebuild-bcrypt.js ./scripts/
 RUN pnpm install --frozen-lockfile
-# No need to rebuild here as postinstall script will handle it
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -26,9 +24,6 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Explicitly run bcrypt rebuild script
-RUN node scripts/rebuild-bcrypt.js
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -48,8 +43,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install runtime dependencies for bcrypt
-RUN apk add --no-cache libc6-compat python3 make g++
+# Install runtime dependencies
+RUN apk add --no-cache libc6-compat python3
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -57,7 +52,6 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
-COPY --from=builder /app/scripts/rebuild-bcrypt.js ./scripts/rebuild-bcrypt.js
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -67,14 +61,13 @@ RUN pnpm add -g prisma
 
 # Create necessary directories and set permissions
 RUN mkdir -p .next/cache
-RUN chown -R nextjs:nodejs .next scripts
+RUN chown -R nextjs:nodejs .next
 
-# Copy the node_modules from builder (including bcrypt) instead of just binding
+# Copy the node_modules from builder
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Make scripts executable
 RUN chmod +x ./entrypoint.sh
-RUN chmod +x ./scripts/rebuild-bcrypt.js
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
